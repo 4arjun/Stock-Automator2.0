@@ -3,8 +3,8 @@ name: Daily NSE Screener
 on:
   workflow_dispatch:
   schedule:
-    # 4:30 PM IST, Monday-Friday. GitHub Actions schedules use UTC.
-    - cron: "0 11 * * 1-5"
+    # Runs at 11:15 AM UTC (4:45 PM IST)
+    - cron: "15 11 * * 1-5"
 
 jobs:
   run-screener:
