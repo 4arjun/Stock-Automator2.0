@@ -11,6 +11,7 @@ Run:
     python3 main.py --symbols RELIANCE TCS INFY
     python3 main.py --symbols RELIANCE TCS INFY --strategy 1.0
     python3 main.py --symbols RELIANCE TCS INFY --strategy 2.0
+    python3 main.py --symbols RELIANCE TCS INFY --strategy be-volume-rsi-65-68
     python3 main.py --symbols RELIANCE TCS INFY --save-db --update-trigger-prices
 """
 
@@ -51,9 +52,17 @@ MIN_PRICE = 50.0
 MIN_AVG_TRADED_VALUE = 5 * 10_000_000  # Rs 5 crore
 STRATEGY_V1 = "NSE_21_EMA_PULLBACK"
 STRATEGY_V2 = "NSE_21_EMA_PULLBACK_2_0"
+STRATEGY_BE_VOLUME_RSI_65_68 = "BE_VOLUME_REVERSAL_RSI_65_68"
+STRATEGY_BE_VOLUME_HIGH_CONFIDENCE = "BE_VOLUME_REVERSAL_HIGH_CONFIDENCE"
+STRATEGY_RANGE_BREAKOUT_RSI_65_68 = "RANGE_BREAKOUT_VOLUME_RSI_65_68"
+STRATEGY_MOMENTUM_TIGHT_EMA = "MOMENTUM_PULLBACK_TIGHT_EMA"
 STRATEGY_NAMES = {
     "1.0": STRATEGY_V1,
     "2.0": STRATEGY_V2,
+    "be-volume-rsi-65-68": STRATEGY_BE_VOLUME_RSI_65_68,
+    "be-volume-high-confidence": STRATEGY_BE_VOLUME_HIGH_CONFIDENCE,
+    "range-breakout-rsi-65-68": STRATEGY_RANGE_BREAKOUT_RSI_65_68,
+    "momentum-tight-ema": STRATEGY_MOMENTUM_TIGHT_EMA,
 }
 
 
@@ -256,6 +265,37 @@ def pullback_volume_below_average(history: pd.DataFrame, avg_volume20: float) ->
     return False
 
 
+def low_near_level(low_price: float, level: float, tolerance_pct: float) -> bool:
+    return low_price <= level * (1 + tolerance_pct / 100)
+
+
+def has_recent_pullback(history: pd.DataFrame, min_days: int = 3, max_days: int = 8) -> bool:
+    if len(history) < max_days + 2:
+        return False
+
+    previous = history.iloc[:-1]
+    for window_size in range(min_days, max_days + 1):
+        window = previous.tail(window_size)
+        if len(window) < window_size:
+            continue
+        first_close = float(window["Close"].iloc[0])
+        last_close = float(window["Close"].iloc[-1])
+        if first_close <= 0:
+            continue
+        decline_pct = (first_close - last_close) / first_close * 100
+        if 1 <= decline_pct <= 12:
+            return True
+    return False
+
+
+def three_month_return_positive(history: pd.DataFrame) -> bool:
+    if len(history) < 64:
+        return False
+    past_close = float(history.iloc[-64]["Close"])
+    latest_close = float(history.iloc[-1]["Close"])
+    return past_close > 0 and latest_close > past_close
+
+
 def bullish_engulfing(previous: pd.Series, latest: pd.Series) -> bool:
     previous_bearish = float(previous["Close"]) < float(previous["Open"])
     latest_bullish = float(latest["Close"]) > float(latest["Open"])
@@ -456,9 +496,162 @@ def screen_history_v2(symbol: str, history: pd.DataFrame) -> dict[str, float | s
     return result
 
 
+def screen_be_volume_reversal(symbol: str, history: pd.DataFrame, strategy_name: str) -> dict[str, float | str] | None:
+    result = base_screen_values(symbol, history, strategy_name)
+    if result is None:
+        return None
+
+    latest = latest_completed_row(history)
+    if latest is None or len(history) < 2:
+        return None
+
+    previous = history.iloc[-2]
+    close_price = float(latest["Close"])
+    previous_high = float(previous["High"])
+    previous_volume = float(previous["Volume"])
+    latest_volume = float(result["Today's Volume"])
+    avg_volume20 = float(result["Average Volume(20)"])
+
+    values = [close_price, previous_high, previous_volume, latest_volume, avg_volume20]
+    if any(math.isnan(value) or value <= 0 for value in values):
+        return None
+
+    passes = [
+        bullish_engulfing(previous, latest),
+        latest_volume >= avg_volume20 * 1.2,
+        float(previous["Close"]) < float(previous["Open"]),
+        close_price > previous_high,
+        close_price > float(result["200 DMA"]),
+        float(result["RSI(14)"]) > 50,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+        float(result["Avg Traded Value"]) >= MIN_AVG_TRADED_VALUE,
+        float(result["Close Price"]) >= MIN_PRICE,
+    ]
+    if not all(passes):
+        return None
+
+    result["Bullish Pattern Detected"] = "Bullish Engulfing"
+    result["Signal Score"] = 1
+    return result
+
+
+def screen_be_volume_rsi_65_68(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_be_volume_reversal(symbol, history, STRATEGY_BE_VOLUME_RSI_65_68)
+    if result is None:
+        return None
+
+    passes = [
+        65 <= float(result["RSI(14)"]) <= 68,
+        float(result["Relative Volume (RVOL)"]) >= 1.2,
+        float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+    ]
+    return result if all(passes) else None
+
+
+def screen_be_volume_high_confidence(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_be_volume_reversal(symbol, history, STRATEGY_BE_VOLUME_HIGH_CONFIDENCE)
+    if result is None:
+        return None
+
+    passes = [
+        62 <= float(result["RSI(14)"]) <= 68,
+        float(result["Relative Volume (RVOL)"]) >= 1.5,
+        float(result["Distance from 52-week High (%)"]) <= 5,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+    ]
+    return result if all(passes) else None
+
+
+def screen_range_breakout_rsi_65_68(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = base_screen_values(symbol, history, STRATEGY_RANGE_BREAKOUT_RSI_65_68)
+    if result is None or len(history) < 22:
+        return None
+
+    latest = latest_completed_row(history)
+    if latest is None:
+        return None
+
+    previous_20_day_high = float(history.iloc[-21:-1]["High"].max())
+    close_price = float(result["Close Price"])
+    latest_volume = float(result["Today's Volume"])
+    avg_volume20 = float(result["Average Volume(20)"])
+    values = [previous_20_day_high, close_price, latest_volume, avg_volume20]
+    if any(math.isnan(value) or value <= 0 for value in values):
+        return None
+
+    passes = [
+        close_price > previous_20_day_high,
+        latest_volume >= avg_volume20 * 1.5,
+        close_price > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        65 <= float(result["RSI(14)"]) <= 68,
+        float(result["Relative Volume (RVOL)"]) >= 2.0,
+        float(result["Distance from 52-week High (%)"]) <= 8,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+        closes_in_top_pct(latest, 0.25),
+        float(result["Avg Traded Value"]) >= MIN_AVG_TRADED_VALUE,
+        float(result["Close Price"]) >= MIN_PRICE,
+    ]
+    if not all(passes):
+        return None
+
+    result["Bullish Pattern Detected"] = "20D High Breakout"
+    result["Signal Score"] = 0
+    return result
+
+
+def screen_momentum_tight_ema(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = base_screen_values(symbol, history, STRATEGY_MOMENTUM_TIGHT_EMA)
+    if result is None or len(history) < 64:
+        return None
+
+    latest = latest_completed_row(history)
+    if latest is None:
+        return None
+
+    previous = history.iloc[-2]
+    passes = [
+        three_month_return_positive(history),
+        has_recent_pullback(history),
+        float(previous["Close"]) < float(previous["EMA21"]),
+        float(latest["Close"]) > float(latest["EMA21"]),
+        float(latest["Close"]) > float(latest["Open"]),
+        float(latest["Volume"]) > float(previous["Volume"]),
+        55 <= float(result["RSI(14)"]) <= 70,
+        float(result["Relative Volume (RVOL)"]) >= 0.8,
+        float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 1.5,
+        float(result["Avg Traded Value"]) >= MIN_AVG_TRADED_VALUE,
+        float(result["Close Price"]) >= MIN_PRICE,
+    ]
+    if not all(passes):
+        return None
+
+    result["Bullish Pattern Detected"] = "21 EMA Reclaim"
+    result["Signal Score"] = 0
+    return result
+
+
+SCREENERS = {
+    "1.0": screen_history_v1,
+    "2.0": screen_history_v2,
+    "be-volume-rsi-65-68": screen_be_volume_rsi_65_68,
+    "be-volume-high-confidence": screen_be_volume_high_confidence,
+    "range-breakout-rsi-65-68": screen_range_breakout_rsi_65_68,
+    "momentum-tight-ema": screen_momentum_tight_ema,
+}
+
+
 def selected_strategy_versions(strategy: str) -> list[str]:
     if strategy == "all":
-        return ["1.0", "2.0"]
+        return list(SCREENERS)
+    if strategy == "optimized":
+        return [
+            "be-volume-rsi-65-68",
+            "be-volume-high-confidence",
+            "range-breakout-rsi-65-68",
+            "momentum-tight-ema",
+        ]
     return [strategy]
 
 
@@ -469,11 +662,7 @@ def screen_history(symbol: str, history: pd.DataFrame, strategy: str) -> list[di
 
     results: list[dict[str, float | str]] = []
     for strategy_version in selected_strategy_versions(strategy):
-        result = (
-            screen_history_v1(symbol, prepared_history)
-            if strategy_version == "1.0"
-            else screen_history_v2(symbol, prepared_history)
-        )
+        result = SCREENERS[strategy_version](symbol, prepared_history)
         if result:
             results.append(result)
     return results
@@ -691,7 +880,7 @@ def format_output(frame: pd.DataFrame) -> pd.DataFrame:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Screen NSE stocks for a 21 EMA pullback continuation setup."
+        description="Screen NSE stocks with the configured swing-trading strategy."
     )
     parser.add_argument(
         "--symbols",
@@ -705,7 +894,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--output", help="Optional CSV output path.")
     parser.add_argument(
         "--strategy",
-        choices=["all", "1.0", "2.0"],
+        choices=["all", "optimized", *SCREENERS.keys()],
         default="all",
         help="Strategy version to run. Default: all.",
     )
@@ -744,7 +933,7 @@ def main() -> int:
             client = get_supabase_client()
             price_rows = save_trigger_prices_to_supabase(client, fetch_triggers_for_price_updates(client))
             print(f"Upserted {price_rows} trigger close-price rows to Supabase.", file=sys.stderr)
-        print("No stocks matched the 21 EMA pullback setup.")
+        print("No stocks matched the selected strategy setup.")
         return 0
 
     if config.limit:
