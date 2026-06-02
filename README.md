@@ -52,6 +52,7 @@ Run one specific strategy:
 .venv/bin/python main.py --strategy be-volume-hc-mid-52w
 .venv/bin/python main.py --strategy be-volume-hc-balanced
 .venv/bin/python main.py --strategy be-volume-hc-early-surge
+.venv/bin/python main.py --strategy be-volume-hc-cool-rvol
 ```
 
 ## Strategy Choices
@@ -70,6 +71,7 @@ Available strategy keys:
 - `be-volume-hc-mid-52w`
 - `be-volume-hc-balanced`
 - `be-volume-hc-early-surge`
+- `be-volume-hc-cool-rvol`
 - `optimized`
 - `all`
 
@@ -128,9 +130,9 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be between `2%` and `8%`.
 - Distance from 21 EMA must be at most `8%`.
 
-Latest discovery result from `2025-01-01` to `2026-06-03`:
+Latest discovery result from `2025-01-01` to `2026-04-01`:
 
-- Trades: `15`
+- Trades: `14`
 - Target-hit win rate: `100.00%`
 
 ### `BE_VOLUME_HC_BALANCED`
@@ -145,7 +147,7 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be between `2%` and `8%`.
 - Distance from 21 EMA must be between `1%` and `6%`.
 
-Latest discovery result from `2025-01-01` to `2026-06-03`:
+Latest discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `15`
 - Target-hit win rate: `93.33%`
@@ -162,10 +164,28 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be at most `5%`.
 - Distance from 21 EMA must be between `1%` and `6%`.
 
-Latest discovery result from `2025-01-01` to `2026-06-03`:
+Latest discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `13`
 - Target-hit win rate: `92.31%`
+
+### `BE_VOLUME_HC_COOL_RVOL`
+
+This is a broader high-confidence bullish engulfing variant. It keeps the
+strong reversal setup but avoids very large relative-volume spikes, which often
+come after the move is already crowded.
+
+Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
+
+- RSI(14) must be between `58` and `66`.
+- Relative volume must be at most `2.5`.
+- Distance from 52-week high must be at most `5%`.
+- Distance from 21 EMA must be at most `8%`.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `20`
+- Target-hit win rate: `95.00%`
 
 ### `RANGE_BREAKOUT_VOLUME_RSI_65_68`
 
@@ -211,7 +231,7 @@ The discovery script reruns the one-month backtest for only the optimized
 strategies and creates two CSV files:
 
 ```bash
-.venv/bin/python strategy_discovery_backtest.py --start-date 2025-01-01 --end-date 2026-06-03 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
+.venv/bin/python strategy_discovery_backtest.py --start-date 2025-01-01 --end-date 2026-04-01 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
 ```
 
 Outputs:

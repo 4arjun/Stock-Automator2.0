@@ -39,6 +39,7 @@ from main import (
 
 
 DEFAULT_START_DATE = "2025-01-01"
+DEFAULT_END_DATE = "2026-04-01"
 DEFAULT_TRADES_OUTPUT = "strategy_discovery_trades.csv"
 DEFAULT_SUMMARY_OUTPUT = "strategy_discovery_summary.csv"
 DEFAULT_MAX_SYMBOLS = 2400
@@ -427,6 +428,25 @@ def strategy_be_volume_hc_mid_52w(symbol: str, history: pd.DataFrame) -> dict[st
     return result
 
 
+def strategy_be_volume_hc_cool_rvol(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_be_volume_reversal_high_confidence(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 66,
+        float(result["Relative Volume (RVOL)"]) <= 2.5,
+        float(result["Distance from 52-week High (%)"]) <= 5,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "BE_VOLUME_HC_COOL_RVOL"
+    return result
+
+
 STRATEGIES: tuple[StrategyFn, ...] = (
     strategy_be_volume_reversal_rsi_65_68,
     strategy_be_volume_reversal_high_confidence,
@@ -435,6 +455,7 @@ STRATEGIES: tuple[StrategyFn, ...] = (
     strategy_be_volume_hc_balanced,
     strategy_be_volume_hc_early_surge,
     strategy_be_volume_hc_mid_52w,
+    strategy_be_volume_hc_cool_rvol,
 )
 
 
@@ -687,7 +708,6 @@ def sort_trades(rows: list[dict[str, float | int | str | bool | None]], holding_
 
 
 def parse_args() -> argparse.Namespace:
-    today = date.today().isoformat()
     parser = argparse.ArgumentParser(description="Discover and rank 1-month NSE swing strategy variants.")
     parser.add_argument(
         "--symbols",
@@ -695,7 +715,7 @@ def parse_args() -> argparse.Namespace:
         help="Optional NSE symbols to backtest, for example: RELIANCE TCS INFY.",
     )
     parser.add_argument("--start-date", type=parse_date, default=parse_date(DEFAULT_START_DATE), help=f"Default: {DEFAULT_START_DATE}.")
-    parser.add_argument("--end-date", type=parse_date, default=parse_date(today), help=f"Default: {today}.")
+    parser.add_argument("--end-date", type=parse_date, default=parse_date(DEFAULT_END_DATE), help=f"Default: {DEFAULT_END_DATE}.")
     parser.add_argument("--batch-size", type=int, default=80, help="Yahoo Finance batch size. Default: 80.")
     parser.add_argument("--sleep", type=float, default=1.0, help="Seconds to sleep between batches. Default: 1.")
     parser.add_argument(

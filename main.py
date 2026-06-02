@@ -59,6 +59,7 @@ STRATEGY_MOMENTUM_TIGHT_EMA = "MOMENTUM_PULLBACK_TIGHT_EMA"
 STRATEGY_BE_VOLUME_HC_MID_52W = "BE_VOLUME_HC_MID_52W"
 STRATEGY_BE_VOLUME_HC_BALANCED = "BE_VOLUME_HC_BALANCED"
 STRATEGY_BE_VOLUME_HC_EARLY_SURGE = "BE_VOLUME_HC_EARLY_SURGE"
+STRATEGY_BE_VOLUME_HC_COOL_RVOL = "BE_VOLUME_HC_COOL_RVOL"
 STRATEGY_NAMES = {
     "1.0": STRATEGY_V1,
     "2.0": STRATEGY_V2,
@@ -69,6 +70,7 @@ STRATEGY_NAMES = {
     "be-volume-hc-mid-52w": STRATEGY_BE_VOLUME_HC_MID_52W,
     "be-volume-hc-balanced": STRATEGY_BE_VOLUME_HC_BALANCED,
     "be-volume-hc-early-surge": STRATEGY_BE_VOLUME_HC_EARLY_SURGE,
+    "be-volume-hc-cool-rvol": STRATEGY_BE_VOLUME_HC_COOL_RVOL,
 }
 
 
@@ -692,6 +694,24 @@ def screen_be_volume_hc_early_surge(symbol: str, history: pd.DataFrame) -> dict[
     return result
 
 
+def screen_be_volume_hc_cool_rvol(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_be_volume_high_confidence(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 66,
+        float(result["Relative Volume (RVOL)"]) <= 2.5,
+        float(result["Distance from 52-week High (%)"]) <= 5,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+    ]
+    if not all(passes):
+        return None
+
+    result["Strategy Name"] = STRATEGY_BE_VOLUME_HC_COOL_RVOL
+    return result
+
+
 SCREENERS = {
     "1.0": screen_history_v1,
     "2.0": screen_history_v2,
@@ -702,6 +722,7 @@ SCREENERS = {
     "be-volume-hc-mid-52w": screen_be_volume_hc_mid_52w,
     "be-volume-hc-balanced": screen_be_volume_hc_balanced,
     "be-volume-hc-early-surge": screen_be_volume_hc_early_surge,
+    "be-volume-hc-cool-rvol": screen_be_volume_hc_cool_rvol,
 }
 
 
@@ -717,6 +738,7 @@ def selected_strategy_versions(strategy: str) -> list[str]:
             "be-volume-hc-mid-52w",
             "be-volume-hc-balanced",
             "be-volume-hc-early-surge",
+            "be-volume-hc-cool-rvol",
         ]
     return [strategy]
 
