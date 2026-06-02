@@ -370,11 +370,71 @@ def strategy_momentum_pullback_tight_ema(symbol: str, history: pd.DataFrame) -> 
     return result
 
 
+def strategy_be_volume_hc_balanced(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_be_volume_reversal_high_confidence(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        60 <= float(result["RSI(14)"]) <= 68,
+        float(result["Relative Volume (RVOL)"]) <= 2.5,
+        2 <= float(result["Distance from 52-week High (%)"]) <= 8,
+        1 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "BE_VOLUME_HC_BALANCED"
+    return result
+
+
+def strategy_be_volume_hc_early_surge(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_be_volume_reversal_high_confidence(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 66,
+        float(result["Relative Volume (RVOL)"]) <= 2.5,
+        float(result["Distance from 52-week High (%)"]) <= 5,
+        1 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "BE_VOLUME_HC_EARLY_SURGE"
+    return result
+
+
+def strategy_be_volume_hc_mid_52w(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_be_volume_reversal_high_confidence(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 66,
+        float(result["Relative Volume (RVOL)"]) <= 2.5,
+        2 <= float(result["Distance from 52-week High (%)"]) <= 8,
+        float(result["Distance from 21 EMA (%)"]) <= 8,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "BE_VOLUME_HC_MID_52W"
+    return result
+
+
 STRATEGIES: tuple[StrategyFn, ...] = (
     strategy_be_volume_reversal_rsi_65_68,
     strategy_be_volume_reversal_high_confidence,
     strategy_range_breakout_volume_rsi_65_68,
     strategy_momentum_pullback_tight_ema,
+    strategy_be_volume_hc_balanced,
+    strategy_be_volume_hc_early_surge,
+    strategy_be_volume_hc_mid_52w,
 )
 
 
@@ -634,7 +694,7 @@ def parse_args() -> argparse.Namespace:
         nargs="+",
         help="Optional NSE symbols to backtest, for example: RELIANCE TCS INFY.",
     )
-    parser.add_argument("--start-date", type=parse_date, default=parse_date(DEFAULT_START_DATE), help="Default: 2026-01-01.")
+    parser.add_argument("--start-date", type=parse_date, default=parse_date(DEFAULT_START_DATE), help=f"Default: {DEFAULT_START_DATE}.")
     parser.add_argument("--end-date", type=parse_date, default=parse_date(today), help=f"Default: {today}.")
     parser.add_argument("--batch-size", type=int, default=80, help="Yahoo Finance batch size. Default: 80.")
     parser.add_argument("--sleep", type=float, default=1.0, help="Seconds to sleep between batches. Default: 1.")

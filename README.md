@@ -24,7 +24,7 @@ Scan all NSE EQ stocks with every strategy:
 .venv/bin/python main.py
 ```
 
-Scan only the four optimized strategies:
+Scan only the optimized strategies:
 
 ```bash
 .venv/bin/python main.py --strategy optimized
@@ -49,13 +49,15 @@ Run one specific strategy:
 .venv/bin/python main.py --strategy be-volume-high-confidence
 .venv/bin/python main.py --strategy range-breakout-rsi-65-68
 .venv/bin/python main.py --strategy momentum-tight-ema
+.venv/bin/python main.py --strategy be-volume-hc-mid-52w
+.venv/bin/python main.py --strategy be-volume-hc-balanced
+.venv/bin/python main.py --strategy be-volume-hc-early-surge
 ```
 
 ## Strategy Choices
 
-`main.py --strategy all` runs the original two strategies plus the four optimized
-strategies. `main.py --strategy optimized` runs only the four optimized
-strategies.
+`main.py --strategy all` runs the original two strategies plus the optimized
+strategies. `main.py --strategy optimized` runs only the optimized strategies.
 
 Available strategy keys:
 
@@ -65,6 +67,9 @@ Available strategy keys:
 - `be-volume-high-confidence`
 - `range-breakout-rsi-65-68`
 - `momentum-tight-ema`
+- `be-volume-hc-mid-52w`
+- `be-volume-hc-balanced`
+- `be-volume-hc-early-surge`
 - `optimized`
 - `all`
 
@@ -111,6 +116,57 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
+### `BE_VOLUME_HC_MID_52W`
+
+This is a stricter high-confidence bullish engulfing variant. It avoids stocks
+that are exactly at the 52-week high and avoids extreme volume spikes.
+
+Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
+
+- RSI(14) must be between `58` and `66`.
+- Relative volume must be at most `2.5`.
+- Distance from 52-week high must be between `2%` and `8%`.
+- Distance from 21 EMA must be at most `8%`.
+
+Latest discovery result from `2025-01-01` to `2026-06-03`:
+
+- Trades: `15`
+- Target-hit win rate: `100.00%`
+
+### `BE_VOLUME_HC_BALANCED`
+
+This is a balanced version of the high-confidence bullish engulfing setup. It
+requires the stock to be close to trend support, but not too stretched.
+
+Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
+
+- RSI(14) must be between `60` and `68`.
+- Relative volume must be at most `2.5`.
+- Distance from 52-week high must be between `2%` and `8%`.
+- Distance from 21 EMA must be between `1%` and `6%`.
+
+Latest discovery result from `2025-01-01` to `2026-06-03`:
+
+- Trades: `15`
+- Target-hit win rate: `93.33%`
+
+### `BE_VOLUME_HC_EARLY_SURGE`
+
+This is an early-surge version of the high-confidence bullish engulfing setup.
+It looks for a controlled volume reversal close to the 52-week high.
+
+Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
+
+- RSI(14) must be between `58` and `66`.
+- Relative volume must be at most `2.5`.
+- Distance from 52-week high must be at most `5%`.
+- Distance from 21 EMA must be between `1%` and `6%`.
+
+Latest discovery result from `2025-01-01` to `2026-06-03`:
+
+- Trades: `13`
+- Target-hit win rate: `92.31%`
+
 ### `RANGE_BREAKOUT_VOLUME_RSI_65_68`
 
 This is a non-candlestick breakout strategy. It looks for a strong close above
@@ -151,11 +207,11 @@ Rules:
 
 ## Backtesting And Discovery
 
-The discovery script reruns the one-month backtest for only the four optimized
+The discovery script reruns the one-month backtest for only the optimized
 strategies and creates two CSV files:
 
 ```bash
-.venv/bin/python strategy_discovery_backtest.py --start-date 2026-01-01 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
+.venv/bin/python strategy_discovery_backtest.py --start-date 2025-01-01 --end-date 2026-06-03 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
 ```
 
 Outputs:
