@@ -855,10 +855,7 @@ def selected_strategy_versions(strategy: str) -> list[str]:
         return list(SCREENERS)
     if strategy == "optimized":
         return [
-            "be-volume-rsi-65-68",
             "be-volume-high-confidence",
-            "range-breakout-rsi-65-68",
-            "momentum-tight-ema",
             "be-volume-hc-mid-52w",
             "be-volume-hc-balanced",
             "be-volume-hc-early-surge",

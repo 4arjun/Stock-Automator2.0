@@ -61,8 +61,21 @@ Run one specific strategy:
 
 ## Strategy Choices
 
-`main.py --strategy all` runs the original two strategies plus the optimized
-strategies. `main.py --strategy optimized` runs only the optimized strategies.
+`main.py --strategy all` runs every available strategy. `main.py --strategy
+optimized` runs only strategies whose latest measured target-hit win rate is at
+least `70%`.
+
+Current optimized bundle:
+
+- `be-volume-high-confidence`
+- `be-volume-hc-mid-52w`
+- `be-volume-hc-balanced`
+- `be-volume-hc-early-surge`
+- `be-volume-hc-cool-rvol`
+- `rsi-dip-reclaim-optimal`
+- `rsi-dip-reclaim-precision`
+- `rsi-dip-reclaim-expanded-80`
+- `ema21-bounce-expanded`
 
 Available strategy keys:
 
