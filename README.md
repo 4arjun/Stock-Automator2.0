@@ -62,8 +62,8 @@ Run one specific strategy:
 ## Strategy Choices
 
 `main.py --strategy all` runs every available strategy. `main.py --strategy
-optimized` runs only strategies whose latest measured target-hit win rate is at
-least `70%`.
+optimized` runs the curated optimized bundle configured in `main.py`, based on
+the strongest discovery variants.
 
 Current optimized bundle:
 
@@ -101,7 +101,7 @@ Available strategy keys:
 These strategies were discovered with a one-month target-hit backtest. In that
 backtest, a win meant the stock touched the target price within the next 30
 trading days after the signal. Only the strategies listed in the current
-optimized bundle above run when using `--strategy optimized`; lower win-rate
+optimized bundle above run when using `--strategy optimized`; additional
 comparison strategies are kept here for reference and can still be run
 individually.
 
@@ -123,7 +123,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `49`
 - Target-hit win rate: `63.27%`
@@ -149,12 +149,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `51`
-- Target-hit win rate: `72.55%`
-- Average exit return: `0.30%`
-- Profit factor: `1.15`
+- Trades: `360`
+- Target-hit win rate: `74.44%`
+- Average exit return: `0.22%`
+- Profit factor: `1.11`
 
 ### `BE_VOLUME_HC_MID_52W`
 
@@ -168,10 +168,10 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be between `2%` and `8%`.
 - Distance from 21 EMA must be at most `8%`.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `14`
-- Target-hit win rate: `100.00%`
+- Trades: `97`
+- Target-hit win rate: `81.44%`
 
 ### `BE_VOLUME_HC_BALANCED`
 
@@ -185,10 +185,10 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be between `2%` and `8%`.
 - Distance from 21 EMA must be between `1%` and `6%`.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `15`
-- Target-hit win rate: `93.33%`
+- Trades: `76`
+- Target-hit win rate: `73.68%`
 
 ### `BE_VOLUME_HC_EARLY_SURGE`
 
@@ -202,10 +202,10 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be at most `5%`.
 - Distance from 21 EMA must be between `1%` and `6%`.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `13`
-- Target-hit win rate: `92.31%`
+- Trades: `103`
+- Target-hit win rate: `66.99%`
 
 ### `BE_VOLUME_HC_COOL_RVOL`
 
@@ -220,10 +220,10 @@ Additional rules on top of `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`:
 - Distance from 52-week high must be at most `5%`.
 - Distance from 21 EMA must be at most `8%`.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `20`
-- Target-hit win rate: `95.00%`
+- Trades: `159`
+- Target-hit win rate: `74.21%`
 
 ### `RSI_DIP_RECLAIM_EXPANDED_80`
 
@@ -246,7 +246,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `45`
 - Target-hit win rate: `80.00%`
@@ -274,12 +274,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `30`
-- Target-hit win rate: `80.00%`
-- Average exit return: `1.75%`
-- Profit factor: `2.31`
+- Trades: `157`
+- Target-hit win rate: `74.52%`
+- Average exit return: `1.43%`
+- Profit factor: `1.95`
 
 ### `RSI_DIP_RECLAIM_PRECISION`
 
@@ -302,7 +302,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `20`
 - Target-hit win rate: `95.00%`
@@ -330,7 +330,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `80`
 - Target-hit win rate: `76.25%`
@@ -355,7 +355,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `70`
 - Target-hit win rate: `65.71%`
@@ -382,7 +382,7 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Latest discovery result from `2025-01-01` to `2026-04-01`:
+Prior discovery result from `2025-01-01` to `2026-04-01`:
 
 - Trades: `71`
 - Target-hit win rate: `66.20%`
@@ -395,7 +395,7 @@ The discovery script reruns the one-month backtest for the active discovery
 variants and creates two CSV files:
 
 ```bash
-.venv/bin/python strategy_discovery_backtest.py --start-date 2025-01-01 --end-date 2026-04-01 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
+.venv/bin/python strategy_discovery_backtest.py --start-date 2020-01-01 --end-date 2026-04-01 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
 ```
 
 Outputs:
@@ -412,25 +412,19 @@ the next 30 trading days. The current discovery defaults are:
 - Holding window: `30` trading days
 - Universe cap: `2400` sorted NSE EQ symbols
 
-Recent backtest-only broad-strategy experiments from `2025-01-01` to
+Recent discovery results from `2020-01-01` to
 `2026-04-01`:
 
-- `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`: `51` trades, `72.55%` target-hit win rate.
-- `BE_VOLUME_HC_MID_52W`: `14` trades, `100.00%` target-hit win rate.
-- `BE_VOLUME_HC_COOL_RVOL`: `20` trades, `95.00%` target-hit win rate.
-- `BE_VOLUME_HC_BALANCED`: `15` trades, `93.33%` target-hit win rate.
-- `BE_VOLUME_HC_EARLY_SURGE`: `13` trades, `92.31%` target-hit win rate.
-- `MOMENTUM_PULLBACK_TIGHT_EMA`: `71` trades, `66.20%` target-hit win rate.
-- `RANGE_BREAKOUT_VOLUME_RSI_65_68`: `70` trades, `65.71%` target-hit win rate.
-- `BE_VOLUME_REVERSAL_RSI_65_68`: `49` trades, `63.27%` target-hit win rate.
-- `RSI_DIP_RECLAIM_PRECISION`: `20` trades, `95.00%` target-hit win rate.
-- `RSI_DIP_RECLAIM_EXPANDED_80`: `45` trades, `80.00%` target-hit win rate.
-- `RSI_DIP_RECLAIM_OPTIMAL`: `30` trades, `80.00%` target-hit win rate.
-- `RSI_DIP_RECLAIM_BROAD`: `51` trades, `74.51%` target-hit win rate.
-- `EMA21_BOUNCE_EXPANDED`: `80` trades, `76.25%` target-hit win rate.
-- `EMA21_BOUNCE_BROAD`: `96` trades, `72.92%` target-hit win rate.
-- `VOLUME_DRYUP_BREAKOUT_OPTIMIZED`: `44` trades, `72.73%` target-hit win rate.
-- `TIGHT_BASE_BREAKOUT_OPTIMIZED`: `30` trades, `73.33%` target-hit win rate.
+- `BE_VOLUME_HC_MID_52W`: `97` trades, `81.44%` target-hit win rate.
+- `RSI_DIP_RECLAIM_BROAD`: `317` trades, `77.60%` target-hit win rate.
+- `RSI_DIP_RECLAIM_OPTIMAL`: `157` trades, `74.52%` target-hit win rate.
+- `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`: `360` trades, `74.44%` target-hit win rate.
+- `BE_VOLUME_HC_COOL_RVOL`: `159` trades, `74.21%` target-hit win rate.
+- `VOLUME_DRYUP_BREAKOUT_OPTIMIZED`: `325` trades, `74.15%` target-hit win rate.
+- `BE_VOLUME_HC_BALANCED`: `76` trades, `73.68%` target-hit win rate.
+- `EMA21_BOUNCE_BROAD`: `568` trades, `72.71%` target-hit win rate.
+- `TIGHT_BASE_BREAKOUT_OPTIMIZED`: `161` trades, `72.05%` target-hit win rate.
+- `BE_VOLUME_HC_EARLY_SURGE`: `103` trades, `66.99%` target-hit win rate.
 
 ## Supabase
 
