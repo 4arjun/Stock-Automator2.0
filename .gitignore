@@ -1,10 +1,13 @@
 .env
+.venv/
+__pycache__/
+.pycache/
+.pycache_tmp/
+
 nse_21ema_pullbacks.csv
-supabase_schema.sql
-.venv
 .strategy_discovery_summary.csv
 .strategy_discovery_trades.csv
+supabase_schema.sql
+
 .strategy_discovery_backtest.py
 .backtest_strategies.py
-.pycache
-.pycache_tmp
