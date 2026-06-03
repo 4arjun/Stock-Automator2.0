@@ -107,6 +107,13 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `49`
+- Target-hit win rate: `63.27%`
+- Average exit return: `0.11%`
+- Profit factor: `1.05`
+
 ### `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`
 
 This is a tighter version of the bullish engulfing volume reversal setup. It
@@ -125,6 +132,13 @@ Rules:
 - Close must not be more than `8%` away from the 21 EMA.
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `51`
+- Target-hit win rate: `72.55%`
+- Average exit return: `0.30%`
+- Profit factor: `1.15`
 
 ### `BE_VOLUME_HC_MID_52W`
 
@@ -325,6 +339,13 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `70`
+- Target-hit win rate: `65.71%`
+- Average exit return: `0.19%`
+- Profit factor: `1.09`
+
 ### `MOMENTUM_PULLBACK_TIGHT_EMA`
 
 This strategy looks for a stock already in momentum, pulling back to the 21 EMA,
@@ -344,6 +365,13 @@ Rules:
 - Close must be within `1.5%` of the 21 EMA.
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `71`
+- Target-hit win rate: `66.20%`
+- Average exit return: `0.08%`
+- Profit factor: `1.04`
 
 ## Backtesting And Discovery
 
@@ -371,6 +399,10 @@ the next 30 trading days. The current discovery defaults are:
 Recent backtest-only broad-strategy experiments from `2025-01-01` to
 `2026-04-01`:
 
+- `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`: `51` trades, `72.55%` target-hit win rate.
+- `MOMENTUM_PULLBACK_TIGHT_EMA`: `71` trades, `66.20%` target-hit win rate.
+- `RANGE_BREAKOUT_VOLUME_RSI_65_68`: `70` trades, `65.71%` target-hit win rate.
+- `BE_VOLUME_REVERSAL_RSI_65_68`: `49` trades, `63.27%` target-hit win rate.
 - `RSI_DIP_RECLAIM_PRECISION`: `20` trades, `95.00%` target-hit win rate.
 - `RSI_DIP_RECLAIM_EXPANDED_80`: `45` trades, `80.00%` target-hit win rate.
 - `RSI_DIP_RECLAIM_OPTIMAL`: `30` trades, `80.00%` target-hit win rate.
