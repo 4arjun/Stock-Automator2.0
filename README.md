@@ -96,13 +96,16 @@ Available strategy keys:
 - `optimized`
 - `all`
 
-## Optimized Strategy Rules
+## Strategy Rules And Backtest Results
 
-The optimized strategies were discovered with a one-month target-hit backtest.
-In that backtest, a win meant the stock touched the target price within the next
-30 trading days after the signal.
+These strategies were discovered with a one-month target-hit backtest. In that
+backtest, a win meant the stock touched the target price within the next 30
+trading days after the signal. Only the strategies listed in the current
+optimized bundle above run when using `--strategy optimized`; lower win-rate
+comparison strategies are kept here for reference and can still be run
+individually.
 
-### `BE_VOLUME_REVERSAL_RSI_65_68`
+### `BE_VOLUME_REVERSAL_RSI_65_68` Not In Optimized
 
 This is a strict bullish engulfing reversal setup.
 
@@ -334,7 +337,7 @@ Latest discovery result from `2025-01-01` to `2026-04-01`:
 - Average exit return: `0.88%`
 - Profit factor: `1.48`
 
-### `RANGE_BREAKOUT_VOLUME_RSI_65_68`
+### `RANGE_BREAKOUT_VOLUME_RSI_65_68` Not In Optimized
 
 This is a non-candlestick breakout strategy. It looks for a strong close above
 the prior 20-day high with high volume.
@@ -359,7 +362,7 @@ Latest discovery result from `2025-01-01` to `2026-04-01`:
 - Average exit return: `0.19%`
 - Profit factor: `1.09`
 
-### `MOMENTUM_PULLBACK_TIGHT_EMA`
+### `MOMENTUM_PULLBACK_TIGHT_EMA` Not In Optimized
 
 This strategy looks for a stock already in momentum, pulling back to the 21 EMA,
 then reclaiming it.
