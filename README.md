@@ -53,6 +53,10 @@ Run one specific strategy:
 .venv/bin/python main.py --strategy be-volume-hc-balanced
 .venv/bin/python main.py --strategy be-volume-hc-early-surge
 .venv/bin/python main.py --strategy be-volume-hc-cool-rvol
+.venv/bin/python main.py --strategy rsi-dip-reclaim-optimal
+.venv/bin/python main.py --strategy rsi-dip-reclaim-precision
+.venv/bin/python main.py --strategy rsi-dip-reclaim-expanded-80
+.venv/bin/python main.py --strategy ema21-bounce-expanded
 ```
 
 ## Strategy Choices
@@ -72,6 +76,10 @@ Available strategy keys:
 - `be-volume-hc-balanced`
 - `be-volume-hc-early-surge`
 - `be-volume-hc-cool-rvol`
+- `rsi-dip-reclaim-optimal`
+- `rsi-dip-reclaim-precision`
+- `rsi-dip-reclaim-expanded-80`
+- `ema21-bounce-expanded`
 - `optimized`
 - `all`
 
@@ -187,6 +195,118 @@ Latest discovery result from `2025-01-01` to `2026-04-01`:
 - Trades: `20`
 - Target-hit win rate: `95.00%`
 
+### `RSI_DIP_RECLAIM_EXPANDED_80`
+
+This is a non-candlestick pullback strategy. It looks for a stock in a positive
+3-month trend where RSI dipped below 50, then reclaimed strength while price
+also reclaimed the 21 EMA.
+
+Rules:
+
+- 3-month return must be positive.
+- RSI(14) must have dipped below `50` within the previous 10 trading days.
+- Latest RSI(14) must reclaim above `55`.
+- Previous close must be below the 21 EMA.
+- Current close must reclaim and close above the 21 EMA.
+- Close must be above 50 DMA, and 50 DMA must be above 200 DMA.
+- RSI(14) must be between `55` and `65`.
+- Relative volume must be between `1.0` and `2.0`.
+- Distance from 52-week high must be between `5%` and `12%`.
+- Distance from 21 EMA must be between `3%` and `6%`.
+- Average traded value must be at least Rs 5 crore.
+- Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `45`
+- Target-hit win rate: `80.00%`
+- Average exit return: `1.60%`
+- Profit factor: `2.06`
+
+### `RSI_DIP_RECLAIM_OPTIMAL`
+
+This is the tighter RSI dip-reclaim setup. It looks for the same RSI dip below
+50 and 21 EMA reclaim, but keeps the trade closer to the 21 EMA and requires a
+moderate volume expansion.
+
+Rules:
+
+- 3-month return must be positive.
+- RSI(14) must have dipped below `50` within the previous 10 trading days.
+- Latest RSI(14) must reclaim above `55`.
+- Previous close must be below the 21 EMA.
+- Current close must reclaim and close above the 21 EMA.
+- Close must be above 50 DMA, and 50 DMA must be above 200 DMA.
+- RSI(14) must be between `58` and `68`.
+- Relative volume must be between `1.2` and `3.0`.
+- Distance from 52-week high must be between `2%` and `10%`.
+- Distance from 21 EMA must be at most `3%`.
+- Average traded value must be at least Rs 5 crore.
+- Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `30`
+- Target-hit win rate: `80.00%`
+- Average exit return: `1.75%`
+- Profit factor: `2.31`
+
+### `RSI_DIP_RECLAIM_PRECISION`
+
+This is the most selective RSI dip-reclaim setup. It avoids both weaker RSI
+reclaims and hotter volume spikes, so it produced fewer trades but a higher
+target-hit rate in the discovery run.
+
+Rules:
+
+- 3-month return must be positive.
+- RSI(14) must have dipped below `50` within the previous 10 trading days.
+- Latest RSI(14) must reclaim above `55`.
+- Previous close must be below the 21 EMA.
+- Current close must reclaim and close above the 21 EMA.
+- Close must be above 50 DMA, and 50 DMA must be above 200 DMA.
+- RSI(14) must be between `58` and `65`.
+- Relative volume must be at least `1.0` and at most `2.0`.
+- Distance from 52-week high must be between `3%` and `10%`.
+- Distance from 21 EMA must be at most `3%`.
+- Average traded value must be at least Rs 5 crore.
+- Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `20`
+- Target-hit win rate: `95.00%`
+- Average exit return: `3.46%`
+- Profit factor: `6.77`
+
+### `EMA21_BOUNCE_EXPANDED`
+
+This is a broader trend-continuation pullback setup. It looks for a stock above
+its key moving averages that pulls back to the 21 EMA, then closes strongly back
+near the top of the candle range.
+
+Rules:
+
+- Close must be above 21 EMA, 21 EMA above 50 DMA, and 50 DMA above 200 DMA.
+- Latest low must touch or come within `1%` of the 21 EMA.
+- Current close must be above current open.
+- Current volume must be greater than previous day volume.
+- Stock must have had a recent 3-8 trading-day pullback.
+- Current close must be in the top `35%` of the daily candle range.
+- RSI(14) must be between `58` and `68`.
+- Relative volume must be between `0.8` and `2.0`.
+- Distance from 52-week high must be between `3%` and `12%`.
+- Distance from 21 EMA must be between `2%` and `6%`.
+- Average traded value must be at least Rs 5 crore.
+- Stock price must be at least Rs 50.
+
+Latest discovery result from `2025-01-01` to `2026-04-01`:
+
+- Trades: `80`
+- Target-hit win rate: `76.25%`
+- Average exit return: `0.88%`
+- Profit factor: `1.48`
+
 ### `RANGE_BREAKOUT_VOLUME_RSI_65_68`
 
 This is a non-candlestick breakout strategy. It looks for a strong close above
@@ -247,6 +367,16 @@ the next 30 trading days. The current discovery defaults are:
 - Stop: `4%`
 - Holding window: `30` trading days
 - Universe cap: `2400` sorted NSE EQ symbols
+
+Recent backtest-only broad-strategy experiments from `2025-01-01` to
+`2026-04-01`:
+
+- `RSI_DIP_RECLAIM_PRECISION`: `20` trades, `95.00%` target-hit win rate.
+- `RSI_DIP_RECLAIM_EXPANDED_80`: `45` trades, `80.00%` target-hit win rate.
+- `RSI_DIP_RECLAIM_OPTIMAL`: `30` trades, `80.00%` target-hit win rate.
+- `EMA21_BOUNCE_EXPANDED`: `80` trades, `76.25%` target-hit win rate.
+- `VOLUME_DRYUP_BREAKOUT_OPTIMIZED`: `44` trades, `72.73%` target-hit win rate.
+- `TIGHT_BASE_BREAKOUT_OPTIMIZED`: `30` trades, `73.33%` target-hit win rate.
 
 ## Supabase
 

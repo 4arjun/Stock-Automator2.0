@@ -183,6 +183,48 @@ def three_month_return_positive(history: pd.DataFrame) -> bool:
     return past_close > 0 and latest_close > past_close
 
 
+def close_range_pct(history: pd.DataFrame, window_size: int) -> float | None:
+    if len(history) < window_size:
+        return None
+    closes = history["Close"].tail(window_size)
+    avg_close = float(closes.mean())
+    if avg_close <= 0:
+        return None
+    return (float(closes.max()) - float(closes.min())) / avg_close * 100
+
+
+def pct_change_between(first_price: float, last_price: float) -> float | None:
+    if first_price <= 0:
+        return None
+    return (last_price - first_price) / first_price * 100
+
+
+def recent_rsi_dip_and_reclaim(history: pd.DataFrame, lookback: int, dip_below: float, reclaim_above: float) -> bool:
+    if len(history) < lookback + 1:
+        return False
+    previous_rsi = history["RSI14"].iloc[-lookback - 1 : -1]
+    latest_rsi = float(history.iloc[-1]["RSI14"])
+    return float(previous_rsi.min()) < dip_below and latest_rsi > reclaim_above
+
+
+def previous_high(history: pd.DataFrame, window_size: int) -> float | None:
+    if len(history) < window_size + 1:
+        return None
+    high_price = history["High"].iloc[-window_size - 1 : -1].max()
+    if pd.isna(high_price):
+        return None
+    return float(high_price)
+
+
+def previous_avg_volume(history: pd.DataFrame, window_size: int) -> float | None:
+    if len(history) < window_size + 1:
+        return None
+    avg_volume = history["Volume"].iloc[-window_size - 1 : -1].mean()
+    if pd.isna(avg_volume) or avg_volume <= 0:
+        return None
+    return float(avg_volume)
+
+
 def strategy_be_pullback_continuation(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
     result = latest_signal_values(symbol, history, "BE_PULLBACK_CONTINUATION", "Bullish Engulfing")
     if result is None or not has_bullish_engulfing(history):
@@ -447,15 +489,286 @@ def strategy_be_volume_hc_cool_rvol(symbol: str, history: pd.DataFrame) -> dict[
     return result
 
 
+def strategy_tight_base_breakout_52w(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = latest_signal_values(symbol, history, "TIGHT_BASE_BREAKOUT_52W", "10D Tight Base Breakout")
+    if result is None or len(history) < 22:
+        return None
+
+    latest = history.iloc[-1]
+    prior_high = previous_high(history, 10)
+    base_range = close_range_pct(history.iloc[:-1], 10)
+    if prior_high is None or base_range is None:
+        return None
+
+    passes = [
+        base_range <= 5,
+        float(result["Entry Close"]) > prior_high,
+        float(result["Relative Volume (RVOL)"]) >= 1.3,
+        float(result["Entry Close"]) > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        58 <= float(result["RSI(14)"]) <= 72,
+        float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 6,
+        closes_in_top_pct(latest, 0.25),
+    ]
+    return result if all(passes) else None
+
+
+def strategy_volume_dryup_breakout(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = latest_signal_values(symbol, history, "VOLUME_DRYUP_BREAKOUT", "Volume Dry-Up Breakout")
+    if result is None or len(history) < 22:
+        return None
+
+    prior_high = previous_high(history, 10)
+    prior_avg_vol5 = previous_avg_volume(history, 5)
+    base_range = close_range_pct(history.iloc[:-1], 10)
+    if prior_high is None or prior_avg_vol5 is None or base_range is None:
+        return None
+
+    passes = [
+        base_range <= 6,
+        prior_avg_vol5 < float(result["Average Volume(20)"]) * 0.75,
+        float(result["Entry Close"]) > prior_high,
+        float(result["Relative Volume (RVOL)"]) >= 1.2,
+        float(result["Entry Close"]) > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        55 <= float(result["RSI(14)"]) <= 70,
+        float(result["Distance from 52-week High (%)"]) <= 12,
+    ]
+    return result if all(passes) else None
+
+
+def strategy_ema21_bounce_continuation(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = latest_signal_values(symbol, history, "EMA21_BOUNCE_CONTINUATION", "21 EMA Bounce")
+    if result is None or len(history) < 12:
+        return None
+
+    latest = history.iloc[-1]
+    previous = history.iloc[-2]
+    passes = [
+        float(result["Entry Close"]) > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        float(latest["Low"]) <= float(result["21 EMA"]) * 1.01,
+        float(latest["Close"]) > float(latest["Open"]),
+        float(latest["Volume"]) > float(previous["Volume"]),
+        55 <= float(result["RSI(14)"]) <= 68,
+        float(result["Distance from 52-week High (%)"]) <= 12,
+        float(result["Distance from 21 EMA (%)"]) <= 3,
+        has_recent_pullback(history, min_days=3, max_days=8),
+        closes_in_top_pct(latest, 0.35),
+    ]
+    return result if all(passes) else None
+
+
+def strategy_rsi_dip_reclaim(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = latest_signal_values(symbol, history, "RSI_DIP_RECLAIM", "RSI Dip Reclaim")
+    if result is None or len(history) < 64:
+        return None
+
+    latest = history.iloc[-1]
+    previous = history.iloc[-2]
+    passes = [
+        three_month_return_positive(history),
+        recent_rsi_dip_and_reclaim(history, lookback=10, dip_below=50, reclaim_above=55),
+        float(previous["Close"]) < float(previous["EMA21"]),
+        float(latest["Close"]) > float(latest["EMA21"]),
+        float(result["Entry Close"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        float(result["Relative Volume (RVOL)"]) >= 1.0,
+        float(result["Distance from 52-week High (%)"]) <= 15,
+        float(result["Distance from 21 EMA (%)"]) <= 4,
+    ]
+    return result if all(passes) else None
+
+
+def strategy_52w_retest_breakout(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = latest_signal_values(symbol, history, "FIFTY_TWO_WEEK_RETEST_BREAKOUT", "52W Retest Breakout")
+    if result is None or len(history) < 35:
+        return None
+
+    latest = history.iloc[-1]
+    recent_20_high = float(history["High"].iloc[-21:-1].max())
+    high_52w = recent_20_high / (1 - float(result["Distance from 52-week High (%)"]) / 100)
+    recent_high_distance = (high_52w - recent_20_high) / high_52w * 100 if high_52w > 0 else math.inf
+    prior_high_5 = previous_high(history, 5)
+    if prior_high_5 is None:
+        return None
+
+    passes = [
+        recent_high_distance <= 2,
+        2 <= float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Entry Close"]) > prior_high_5,
+        float(result["Relative Volume (RVOL)"]) >= 1.1,
+        float(result["Entry Close"]) > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        55 <= float(result["RSI(14)"]) <= 70,
+        closes_in_top_pct(latest, 0.30),
+    ]
+    return result if all(passes) else None
+
+
+def strategy_rsi_dip_reclaim_optimal(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_rsi_dip_reclaim(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        1.2 <= float(result["Relative Volume (RVOL)"]) <= 3.0,
+        2 <= float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 3,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "RSI_DIP_RECLAIM_OPTIMAL"
+    return result
+
+
+def strategy_rsi_dip_reclaim_broad(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_rsi_dip_reclaim(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        1.2 <= float(result["Relative Volume (RVOL)"]) <= 3.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        float(result["Distance from 21 EMA (%)"]) <= 4,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "RSI_DIP_RECLAIM_BROAD"
+    return result
+
+
+def strategy_ema21_bounce_broad(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_ema21_bounce_continuation(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        float(result["Relative Volume (RVOL)"]) >= 0.8,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        2 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "EMA21_BOUNCE_BROAD"
+    return result
+
+
+def strategy_volume_dryup_breakout_optimized(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_volume_dryup_breakout(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        1.5 <= float(result["Relative Volume (RVOL)"]) <= 3.5,
+        float(result["Distance from 52-week High (%)"]) <= 8,
+        1.5 <= float(result["Distance from 21 EMA (%)"]) <= 5,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "VOLUME_DRYUP_BREAKOUT_OPTIMIZED"
+    return result
+
+
+def strategy_tight_base_breakout_optimized(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_tight_base_breakout_52w(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        55 <= float(result["RSI(14)"]) <= 65,
+        float(result["Relative Volume (RVOL)"]) <= 2.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        1.5 <= float(result["Distance from 21 EMA (%)"]) <= 5,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "TIGHT_BASE_BREAKOUT_OPTIMIZED"
+    return result
+
+
+def strategy_rsi_dip_reclaim_precision(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_rsi_dip_reclaim(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 65,
+        float(result["Relative Volume (RVOL)"]) <= 2.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 3,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "RSI_DIP_RECLAIM_PRECISION"
+    return result
+
+
+def strategy_rsi_dip_reclaim_expanded_80(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_rsi_dip_reclaim(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        55 <= float(result["RSI(14)"]) <= 65,
+        float(result["Relative Volume (RVOL)"]) <= 2.0,
+        5 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        3 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "RSI_DIP_RECLAIM_EXPANDED_80"
+    return result
+
+
+def strategy_ema21_bounce_expanded(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = strategy_ema21_bounce_continuation(symbol, history)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        0.8 <= float(result["Relative Volume (RVOL)"]) <= 2.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        2 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    if not all(passes):
+        return None
+
+    result = dict(result)
+    result["Strategy Variant"] = "EMA21_BOUNCE_EXPANDED"
+    return result
+
+
 STRATEGIES: tuple[StrategyFn, ...] = (
-    strategy_be_volume_reversal_rsi_65_68,
     strategy_be_volume_reversal_high_confidence,
-    strategy_range_breakout_volume_rsi_65_68,
-    strategy_momentum_pullback_tight_ema,
     strategy_be_volume_hc_balanced,
     strategy_be_volume_hc_early_surge,
     strategy_be_volume_hc_mid_52w,
     strategy_be_volume_hc_cool_rvol,
+    strategy_52w_retest_breakout,
+    strategy_rsi_dip_reclaim_optimal,
+    strategy_rsi_dip_reclaim_broad,
+    strategy_ema21_bounce_broad,
+    strategy_volume_dryup_breakout_optimized,
+    strategy_tight_base_breakout_optimized,
+    strategy_rsi_dip_reclaim_precision,
+    strategy_rsi_dip_reclaim_expanded_80,
+    strategy_ema21_bounce_expanded,
 )
 
 

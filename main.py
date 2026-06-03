@@ -60,6 +60,10 @@ STRATEGY_BE_VOLUME_HC_MID_52W = "BE_VOLUME_HC_MID_52W"
 STRATEGY_BE_VOLUME_HC_BALANCED = "BE_VOLUME_HC_BALANCED"
 STRATEGY_BE_VOLUME_HC_EARLY_SURGE = "BE_VOLUME_HC_EARLY_SURGE"
 STRATEGY_BE_VOLUME_HC_COOL_RVOL = "BE_VOLUME_HC_COOL_RVOL"
+STRATEGY_RSI_DIP_RECLAIM_OPTIMAL = "RSI_DIP_RECLAIM_OPTIMAL"
+STRATEGY_RSI_DIP_RECLAIM_PRECISION = "RSI_DIP_RECLAIM_PRECISION"
+STRATEGY_RSI_DIP_RECLAIM_EXPANDED_80 = "RSI_DIP_RECLAIM_EXPANDED_80"
+STRATEGY_EMA21_BOUNCE_EXPANDED = "EMA21_BOUNCE_EXPANDED"
 STRATEGY_NAMES = {
     "1.0": STRATEGY_V1,
     "2.0": STRATEGY_V2,
@@ -71,6 +75,10 @@ STRATEGY_NAMES = {
     "be-volume-hc-balanced": STRATEGY_BE_VOLUME_HC_BALANCED,
     "be-volume-hc-early-surge": STRATEGY_BE_VOLUME_HC_EARLY_SURGE,
     "be-volume-hc-cool-rvol": STRATEGY_BE_VOLUME_HC_COOL_RVOL,
+    "rsi-dip-reclaim-optimal": STRATEGY_RSI_DIP_RECLAIM_OPTIMAL,
+    "rsi-dip-reclaim-precision": STRATEGY_RSI_DIP_RECLAIM_PRECISION,
+    "rsi-dip-reclaim-expanded-80": STRATEGY_RSI_DIP_RECLAIM_EXPANDED_80,
+    "ema21-bounce-expanded": STRATEGY_EMA21_BOUNCE_EXPANDED,
 }
 
 
@@ -302,6 +310,14 @@ def three_month_return_positive(history: pd.DataFrame) -> bool:
     past_close = float(history.iloc[-64]["Close"])
     latest_close = float(history.iloc[-1]["Close"])
     return past_close > 0 and latest_close > past_close
+
+
+def recent_rsi_dip_and_reclaim(history: pd.DataFrame, lookback: int, dip_below: float, reclaim_above: float) -> bool:
+    if len(history) < lookback + 1:
+        return False
+    previous_rsi = history["RSI14"].iloc[-lookback - 1 : -1]
+    latest_rsi = float(history.iloc[-1]["RSI14"])
+    return float(previous_rsi.min()) < dip_below and latest_rsi > reclaim_above
 
 
 def bullish_engulfing(previous: pd.Series, latest: pd.Series) -> bool:
@@ -712,6 +728,110 @@ def screen_be_volume_hc_cool_rvol(symbol: str, history: pd.DataFrame) -> dict[st
     return result
 
 
+def screen_rsi_dip_reclaim_base(symbol: str, history: pd.DataFrame, strategy_name: str) -> dict[str, float | str] | None:
+    result = base_screen_values(symbol, history, strategy_name)
+    if result is None or len(history) < 64:
+        return None
+
+    latest = latest_completed_row(history)
+    if latest is None:
+        return None
+
+    previous = history.iloc[-2]
+    passes = [
+        three_month_return_positive(history),
+        recent_rsi_dip_and_reclaim(history, lookback=10, dip_below=50, reclaim_above=55),
+        float(previous["Close"]) < float(previous["EMA21"]),
+        float(latest["Close"]) > float(latest["EMA21"]),
+        float(result["Close Price"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        float(result["Relative Volume (RVOL)"]) >= 1.0,
+        float(result["Distance from 52-week High (%)"]) <= 15,
+        float(result["Distance from 21 EMA (%)"]) <= 6,
+        float(result["Avg Traded Value"]) >= MIN_AVG_TRADED_VALUE,
+        float(result["Close Price"]) >= MIN_PRICE,
+    ]
+    if not all(passes):
+        return None
+
+    result["Bullish Pattern Detected"] = "RSI Dip Reclaim"
+    result["Signal Score"] = 0
+    return result
+
+
+def screen_rsi_dip_reclaim_optimal(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_rsi_dip_reclaim_base(symbol, history, STRATEGY_RSI_DIP_RECLAIM_OPTIMAL)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 68,
+        1.2 <= float(result["Relative Volume (RVOL)"]) <= 3.0,
+        2 <= float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 3,
+    ]
+    return result if all(passes) else None
+
+
+def screen_rsi_dip_reclaim_precision(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_rsi_dip_reclaim_base(symbol, history, STRATEGY_RSI_DIP_RECLAIM_PRECISION)
+    if result is None:
+        return None
+
+    passes = [
+        58 <= float(result["RSI(14)"]) <= 65,
+        float(result["Relative Volume (RVOL)"]) <= 2.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 10,
+        float(result["Distance from 21 EMA (%)"]) <= 3,
+    ]
+    return result if all(passes) else None
+
+
+def screen_rsi_dip_reclaim_expanded_80(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = screen_rsi_dip_reclaim_base(symbol, history, STRATEGY_RSI_DIP_RECLAIM_EXPANDED_80)
+    if result is None:
+        return None
+
+    passes = [
+        55 <= float(result["RSI(14)"]) <= 65,
+        float(result["Relative Volume (RVOL)"]) <= 2.0,
+        5 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        3 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+    ]
+    return result if all(passes) else None
+
+
+def screen_ema21_bounce_expanded(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+    result = base_screen_values(symbol, history, STRATEGY_EMA21_BOUNCE_EXPANDED)
+    if result is None or len(history) < 64:
+        return None
+
+    latest = latest_completed_row(history)
+    if latest is None:
+        return None
+
+    previous = history.iloc[-2]
+    passes = [
+        float(result["Close Price"]) > float(result["21 EMA"]) > float(result["50 DMA"]) > float(result["200 DMA"]),
+        float(latest["Low"]) <= float(result["21 EMA"]) * 1.01,
+        float(latest["Close"]) > float(latest["Open"]),
+        float(latest["Volume"]) > float(previous["Volume"]),
+        has_recent_pullback(history, min_days=3, max_days=8),
+        closes_in_top_pct(latest, 0.35),
+        58 <= float(result["RSI(14)"]) <= 68,
+        0.8 <= float(result["Relative Volume (RVOL)"]) <= 2.0,
+        3 <= float(result["Distance from 52-week High (%)"]) <= 12,
+        2 <= float(result["Distance from 21 EMA (%)"]) <= 6,
+        float(result["Avg Traded Value"]) >= MIN_AVG_TRADED_VALUE,
+        float(result["Close Price"]) >= MIN_PRICE,
+    ]
+    if not all(passes):
+        return None
+
+    result["Bullish Pattern Detected"] = "21 EMA Bounce"
+    result["Signal Score"] = 0
+    return result
+
+
 SCREENERS = {
     "1.0": screen_history_v1,
     "2.0": screen_history_v2,
@@ -723,6 +843,10 @@ SCREENERS = {
     "be-volume-hc-balanced": screen_be_volume_hc_balanced,
     "be-volume-hc-early-surge": screen_be_volume_hc_early_surge,
     "be-volume-hc-cool-rvol": screen_be_volume_hc_cool_rvol,
+    "rsi-dip-reclaim-optimal": screen_rsi_dip_reclaim_optimal,
+    "rsi-dip-reclaim-precision": screen_rsi_dip_reclaim_precision,
+    "rsi-dip-reclaim-expanded-80": screen_rsi_dip_reclaim_expanded_80,
+    "ema21-bounce-expanded": screen_ema21_bounce_expanded,
 }
 
 
@@ -739,6 +863,10 @@ def selected_strategy_versions(strategy: str) -> list[str]:
             "be-volume-hc-balanced",
             "be-volume-hc-early-surge",
             "be-volume-hc-cool-rvol",
+            "rsi-dip-reclaim-optimal",
+            "rsi-dip-reclaim-precision",
+            "rsi-dip-reclaim-expanded-80",
+            "ema21-bounce-expanded",
         ]
     return [strategy]
 
