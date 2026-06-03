@@ -67,15 +67,15 @@ least `70%`.
 
 Current optimized bundle:
 
-- `be-volume-high-confidence`
-- `be-volume-hc-mid-52w`
-- `be-volume-hc-balanced`
-- `be-volume-hc-early-surge`
-- `be-volume-hc-cool-rvol`
-- `rsi-dip-reclaim-optimal`
-- `rsi-dip-reclaim-precision`
-- `rsi-dip-reclaim-expanded-80`
-- `ema21-bounce-expanded`
+- `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`
+- `BE_VOLUME_HC_MID_52W`
+- `BE_VOLUME_HC_BALANCED`
+- `BE_VOLUME_HC_EARLY_SURGE`
+- `BE_VOLUME_HC_COOL_RVOL`
+- `RSI_DIP_RECLAIM_OPTIMAL`
+- `RSI_DIP_RECLAIM_PRECISION`
+- `RSI_DIP_RECLAIM_EXPANDED_80`
+- `EMA21_BOUNCE_EXPANDED`
 
 Available strategy keys:
 
@@ -391,8 +391,8 @@ Latest discovery result from `2025-01-01` to `2026-04-01`:
 
 ## Backtesting And Discovery
 
-The discovery script reruns the one-month backtest for only the optimized
-strategies and creates two CSV files:
+The discovery script reruns the one-month backtest for the active discovery
+variants and creates two CSV files:
 
 ```bash
 .venv/bin/python strategy_discovery_backtest.py --start-date 2025-01-01 --end-date 2026-04-01 --trades-output strategy_discovery_trades.csv --summary-output strategy_discovery_summary.csv
@@ -416,13 +416,19 @@ Recent backtest-only broad-strategy experiments from `2025-01-01` to
 `2026-04-01`:
 
 - `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`: `51` trades, `72.55%` target-hit win rate.
+- `BE_VOLUME_HC_MID_52W`: `14` trades, `100.00%` target-hit win rate.
+- `BE_VOLUME_HC_COOL_RVOL`: `20` trades, `95.00%` target-hit win rate.
+- `BE_VOLUME_HC_BALANCED`: `15` trades, `93.33%` target-hit win rate.
+- `BE_VOLUME_HC_EARLY_SURGE`: `13` trades, `92.31%` target-hit win rate.
 - `MOMENTUM_PULLBACK_TIGHT_EMA`: `71` trades, `66.20%` target-hit win rate.
 - `RANGE_BREAKOUT_VOLUME_RSI_65_68`: `70` trades, `65.71%` target-hit win rate.
 - `BE_VOLUME_REVERSAL_RSI_65_68`: `49` trades, `63.27%` target-hit win rate.
 - `RSI_DIP_RECLAIM_PRECISION`: `20` trades, `95.00%` target-hit win rate.
 - `RSI_DIP_RECLAIM_EXPANDED_80`: `45` trades, `80.00%` target-hit win rate.
 - `RSI_DIP_RECLAIM_OPTIMAL`: `30` trades, `80.00%` target-hit win rate.
+- `RSI_DIP_RECLAIM_BROAD`: `51` trades, `74.51%` target-hit win rate.
 - `EMA21_BOUNCE_EXPANDED`: `80` trades, `76.25%` target-hit win rate.
+- `EMA21_BOUNCE_BROAD`: `96` trades, `72.92%` target-hit win rate.
 - `VOLUME_DRYUP_BREAKOUT_OPTIMIZED`: `44` trades, `72.73%` target-hit win rate.
 - `TIGHT_BASE_BREAKOUT_OPTIMIZED`: `30` trades, `73.33%` target-hit win rate.
 
