@@ -22,9 +22,11 @@ import numpy as np
 import pandas as pd
 import yfinance as yf
 
+import main as scanner
 from main import (
     MIN_AVG_TRADED_VALUE,
     MIN_PRICE,
+    SCREENERS,
     bullish_engulfing,
     chunks,
     closes_in_top_pct,
@@ -64,6 +66,44 @@ class DiscoveryConfig:
 
 
 StrategyFn = Callable[[str, pd.DataFrame], Optional[dict]]
+
+
+def backtest_latest_completed_row(history: pd.DataFrame) -> pd.Series | None:
+    if history.empty or len(history) < 252:
+        return None
+    return history.iloc[-1]
+
+
+scanner.latest_completed_row = backtest_latest_completed_row
+
+
+def discovery_signal_from_main(strategy_key: str, screener: Callable[[str, pd.DataFrame], Optional[dict]]) -> StrategyFn:
+    def strategy(symbol: str, history: pd.DataFrame) -> dict[str, float | str] | None:
+        result = screener(symbol, history)
+        if result is None:
+            return None
+
+        return {
+            "Strategy Variant": str(result["Strategy Name"]),
+            "Symbol": symbol,
+            "Entry Date": iso_date_from_index(history.iloc[-1].name),
+            "Recommendation": "BUY",
+            "Signal Pattern": str(result.get("Bullish Pattern Detected", "None")),
+            "Entry Close": float(result["Close Price"]),
+            "21 EMA": float(result["21 EMA"]),
+            "50 DMA": float(result["50 DMA"]),
+            "200 DMA": float(result["200 DMA"]),
+            "RSI(14)": float(result["RSI(14)"]),
+            "Volume": float(result["Today's Volume"]),
+            "Average Volume(20)": float(result["Average Volume(20)"]),
+            "Relative Volume (RVOL)": float(result["Relative Volume (RVOL)"]),
+            "Distance from 52-week High (%)": float(result["Distance from 52-week High (%)"]),
+            "Distance from 21 EMA (%)": float(result["Distance from 21 EMA (%)"]),
+            "Avg Traded Value": float(result["Avg Traded Value"]),
+        }
+
+    strategy.__name__ = f"strategy_main_{strategy_key.replace('-', '_').replace('.', '_')}"
+    return strategy
 
 
 def parse_date(value: str) -> date:
@@ -697,18 +737,9 @@ def strategy_tight_base_breakout_optimized(symbol: str, history: pd.DataFrame) -
     return result
 
 
-STRATEGIES: tuple[StrategyFn, ...] = (
-    strategy_be_volume_reversal_high_confidence,
-    strategy_be_volume_hc_balanced,
-    strategy_be_volume_hc_early_surge,
-    strategy_be_volume_hc_mid_52w,
-    strategy_be_volume_hc_cool_rvol,
-    strategy_52w_retest_breakout,
-    strategy_rsi_dip_reclaim_optimal,
-    strategy_rsi_dip_reclaim_broad,
-    strategy_ema21_bounce_broad,
-    strategy_volume_dryup_breakout_optimized,
-    strategy_tight_base_breakout_optimized,
+STRATEGIES: tuple[StrategyFn, ...] = tuple(
+    discovery_signal_from_main(strategy_key, screener)
+    for strategy_key, screener in SCREENERS.items()
 )
 
 
@@ -1027,14 +1058,39 @@ def main() -> int:
     )
 
     histories = download_histories(symbols, config)
+    print(
+        f"Finished downloads for {len(histories)}/{len(symbols)} stocks. Starting local backtest...",
+        file=sys.stderr,
+        flush=True,
+    )
+
     rows: list[dict[str, float | int | str | bool | None]] = []
+    skipped = 0
     for index, symbol in enumerate(symbols, start=1):
+        symbol_started = time.perf_counter()
+        print(f"Backtesting {index}/{len(symbols)} {symbol}...", file=sys.stderr, flush=True)
         history = histories.get(symbol)
         if history is None:
-            continue
-        rows.extend(backtest_symbol(symbol, history, config))
-        if index % 100 == 0:
-            print(f"Processed {index}/{len(symbols)} stocks, found {len(rows)} trades...", file=sys.stderr)
+            skipped += 1
+            symbol_trades = 0
+        else:
+            symbol_rows = backtest_symbol(symbol, history, config)
+            symbol_trades = len(symbol_rows)
+            rows.extend(symbol_rows)
+
+        elapsed = time.perf_counter() - symbol_started
+        print(
+            f"Finished {index}/{len(symbols)} {symbol}: {symbol_trades} trades in {elapsed:.1f}s.",
+            file=sys.stderr,
+            flush=True,
+        )
+
+        if index % 25 == 0 or index == len(symbols):
+            print(
+                f"Processed {index}/{len(symbols)} stocks, skipped {skipped}, found {len(rows)} trades...",
+                file=sys.stderr,
+                flush=True,
+            )
 
     trades = sort_trades(rows, config.holding_days)
     summary = summarize_trades(trades)

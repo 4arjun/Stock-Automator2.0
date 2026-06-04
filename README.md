@@ -123,12 +123,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `49`
-- Target-hit win rate: `63.27%`
-- Average exit return: `0.11%`
-- Profit factor: `1.05`
+- Trades: `314`
+- Target-hit win rate: `73.25%`
+- Average exit return: `0.54%`
+- Profit factor: `1.27`
 
 ### `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`
 
@@ -172,6 +172,8 @@ Latest discovery result from `2020-01-01` to `2026-04-01`:
 
 - Trades: `97`
 - Target-hit win rate: `81.44%`
+- Average exit return: `0.55%`
+- Profit factor: `1.28`
 
 ### `BE_VOLUME_HC_BALANCED`
 
@@ -189,6 +191,8 @@ Latest discovery result from `2020-01-01` to `2026-04-01`:
 
 - Trades: `76`
 - Target-hit win rate: `73.68%`
+- Average exit return: `0.86%`
+- Profit factor: `1.46`
 
 ### `BE_VOLUME_HC_EARLY_SURGE`
 
@@ -206,6 +210,8 @@ Latest discovery result from `2020-01-01` to `2026-04-01`:
 
 - Trades: `103`
 - Target-hit win rate: `66.99%`
+- Average exit return: `0.51%`
+- Profit factor: `1.26`
 
 ### `BE_VOLUME_HC_COOL_RVOL`
 
@@ -224,6 +230,8 @@ Latest discovery result from `2020-01-01` to `2026-04-01`:
 
 - Trades: `159`
 - Target-hit win rate: `74.21%`
+- Average exit return: `0.33%`
+- Profit factor: `1.16`
 
 ### `RSI_DIP_RECLAIM_EXPANDED_80`
 
@@ -246,12 +254,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `45`
-- Target-hit win rate: `80.00%`
-- Average exit return: `1.60%`
-- Profit factor: `2.06`
+- Trades: `476`
+- Target-hit win rate: `78.78%`
+- Average exit return: `0.89%`
+- Profit factor: `1.48`
 
 ### `RSI_DIP_RECLAIM_OPTIMAL`
 
@@ -302,12 +310,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `20`
-- Target-hit win rate: `95.00%`
-- Average exit return: `3.46%`
-- Profit factor: `6.77`
+- Trades: `119`
+- Target-hit win rate: `74.79%`
+- Average exit return: `1.39%`
+- Profit factor: `1.89`
 
 ### `EMA21_BOUNCE_EXPANDED`
 
@@ -330,12 +338,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `80`
-- Target-hit win rate: `76.25%`
-- Average exit return: `0.88%`
-- Profit factor: `1.48`
+- Trades: `1988`
+- Target-hit win rate: `76.31%`
+- Average exit return: `0.56%`
+- Profit factor: `1.28`
 
 ### `RANGE_BREAKOUT_VOLUME_RSI_65_68` Not In Optimized
 
@@ -355,12 +363,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `70`
-- Target-hit win rate: `65.71%`
-- Average exit return: `0.19%`
-- Profit factor: `1.09`
+- Trades: `420`
+- Target-hit win rate: `73.57%`
+- Average exit return: `0.68%`
+- Profit factor: `1.36`
 
 ### `MOMENTUM_PULLBACK_TIGHT_EMA` Not In Optimized
 
@@ -382,12 +390,12 @@ Rules:
 - Average traded value must be at least Rs 5 crore.
 - Stock price must be at least Rs 50.
 
-Prior discovery result from `2025-01-01` to `2026-04-01`:
+Latest discovery result from `2020-01-01` to `2026-04-01`:
 
-- Trades: `71`
-- Target-hit win rate: `66.20%`
-- Average exit return: `0.08%`
-- Profit factor: `1.04`
+- Trades: `399`
+- Target-hit win rate: `70.93%`
+- Average exit return: `1.10%`
+- Profit factor: `1.65`
 
 ## Backtesting And Discovery
 
@@ -412,19 +420,23 @@ the next 30 trading days. The current discovery defaults are:
 - Holding window: `30` trading days
 - Universe cap: `2400` sorted NSE EQ symbols
 
-Recent discovery results from `2020-01-01` to
+Recent discovery results for all `main.py` strategies from `2020-01-01` to
 `2026-04-01`:
 
 - `BE_VOLUME_HC_MID_52W`: `97` trades, `81.44%` target-hit win rate.
-- `RSI_DIP_RECLAIM_BROAD`: `317` trades, `77.60%` target-hit win rate.
+- `RSI_DIP_RECLAIM_EXPANDED_80`: `476` trades, `78.78%` target-hit win rate.
+- `EMA21_BOUNCE_EXPANDED`: `1988` trades, `76.31%` target-hit win rate.
+- `RSI_DIP_RECLAIM_PRECISION`: `119` trades, `74.79%` target-hit win rate.
 - `RSI_DIP_RECLAIM_OPTIMAL`: `157` trades, `74.52%` target-hit win rate.
 - `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`: `360` trades, `74.44%` target-hit win rate.
 - `BE_VOLUME_HC_COOL_RVOL`: `159` trades, `74.21%` target-hit win rate.
-- `VOLUME_DRYUP_BREAKOUT_OPTIMIZED`: `325` trades, `74.15%` target-hit win rate.
 - `BE_VOLUME_HC_BALANCED`: `76` trades, `73.68%` target-hit win rate.
-- `EMA21_BOUNCE_BROAD`: `568` trades, `72.71%` target-hit win rate.
-- `TIGHT_BASE_BREAKOUT_OPTIMIZED`: `161` trades, `72.05%` target-hit win rate.
+- `RANGE_BREAKOUT_VOLUME_RSI_65_68`: `420` trades, `73.57%` target-hit win rate.
+- `BE_VOLUME_REVERSAL_RSI_65_68`: `314` trades, `73.25%` target-hit win rate.
+- `MOMENTUM_PULLBACK_TIGHT_EMA`: `399` trades, `70.93%` target-hit win rate.
+- `NSE_21_EMA_PULLBACK`: `9042` trades, `68.25%` target-hit win rate.
 - `BE_VOLUME_HC_EARLY_SURGE`: `103` trades, `66.99%` target-hit win rate.
+- `NSE_21_EMA_PULLBACK_2_0`: `2383` trades, `66.47%` target-hit win rate.
 
 ## Supabase
 
