@@ -75,7 +75,6 @@ Current optimized bundle:
 - `BE_VOLUME_REVERSAL_HIGH_CONFIDENCE`
 - `BE_VOLUME_HC_MID_52W`
 - `BE_VOLUME_HC_BALANCED`
-- `BE_VOLUME_HC_EARLY_SURGE`
 - `BE_VOLUME_HC_COOL_RVOL`
 - `RSI_DIP_RECLAIM_OPTIMAL`
 - `RSI_DIP_RECLAIM_PRECISION`
@@ -199,7 +198,7 @@ Latest discovery result from `2020-01-01` to `2026-04-01`:
 - Average exit return: `0.86%`
 - Profit factor: `1.46`
 
-### `BE_VOLUME_HC_EARLY_SURGE`
+### `BE_VOLUME_HC_EARLY_SURGE` Not In Optimized
 
 This is an early-surge version of the high-confidence bullish engulfing setup.
 It looks for a controlled volume reversal close to the 52-week high.

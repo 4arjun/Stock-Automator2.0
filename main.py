@@ -858,7 +858,6 @@ def selected_strategy_versions(strategy: str) -> list[str]:
             "be-volume-high-confidence",
             "be-volume-hc-mid-52w",
             "be-volume-hc-balanced",
-            "be-volume-hc-early-surge",
             "be-volume-hc-cool-rvol",
             "rsi-dip-reclaim-optimal",
             "rsi-dip-reclaim-precision",
