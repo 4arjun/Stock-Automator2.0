@@ -1,3 +1,8 @@
+<img width="514" height="353" alt="Screenshot 2026-06-03 at 4 56 06 PM" src="https://github.com/user-attachments/assets/4a11463c-1b25-488b-81f7-d27b0d79c9b0" />
+<img width="1512" height="982" alt="Screenshot 2026-06-04 at 10 55 02 AM" src="https://github.com/user-attachments/assets/88a35462-4d7e-42cc-b819-0fe89616ac9a" />
+<img width="1285" height="401" alt="Screenshot 2026-06-04 at 1 28 58 PM" src="https://github.com/user-attachments/assets/e29d7b66-2cc2-4e52-8a89-06e9c4db9cc8" />
+
+
 # NSE Stock Automator
 
 This project screens NSE equity stocks using daily Yahoo Finance data. The main
