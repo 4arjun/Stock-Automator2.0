@@ -26,7 +26,7 @@ No black-box ML, no guesswork — every signal is the output of explicit, audita
                                                                              │
                                                                  ┌───────────┴───────────┐
                                                                  ▼                       ▼
-                                                             CSV Export              Supabase DB
+                                                             CSV Export             Supabase DB
 ```
 
 ---
