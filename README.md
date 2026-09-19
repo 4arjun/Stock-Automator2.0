@@ -23,10 +23,10 @@ No black-box ML, no guesswork — every signal is the output of explicit, audita
 
 ```
      Yahoo Finance Data  ──▶  Indicator Engine  ──▶  Strategy Rules  ──▶  Signals
-                                                                          │
-                                                              ┌───────────┴───────────┐
-                                                              ▼                       ▼
-                                                          CSV Export             Supabase DB
+                                                                             │
+                                                                 ┌───────────┴───────────┐
+                                                                 ▼                       ▼
+                                                             CSV Export              Supabase DB
 ```
 
 ---
